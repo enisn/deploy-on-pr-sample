@@ -72,9 +72,7 @@ public class DeployOnPrSampleDbMigrationService : ITransientDependency
 
     private async Task MigrateDatabaseSchemaAsync(Tenant? tenant = null)
     {
-        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Default");
-
-        Logger.LogInformation($"Migrating schema for {(tenant == null ? "host" : tenant.Name + " tenant")} database..." + $"ConnectionStrings__Default: {connectionString}");
+        Logger.LogInformation($"Migrating schema for {(tenant == null ? "host" : tenant.Name + " tenant")} database...");
 
         await _dbSchemaMigrator.MigrateAsync();
     }

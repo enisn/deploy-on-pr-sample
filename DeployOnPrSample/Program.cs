@@ -22,10 +22,6 @@ public class Program
             .WriteTo.Async(c => c.File("Logs/logs.txt"))
             .WriteTo.Async(c => c.Console());
 
-        Console.WriteLine("GetEnvironmentVariables: ");
-        foreach (DictionaryEntry de in Environment.GetEnvironmentVariables())
-           Console.WriteLine("  {0} = {1}", de.Key, de.Value);
-
         if (IsMigrateDatabase(args))
         {
             loggerConfiguration.MinimumLevel.Override("Volo.Abp", LogEventLevel.Warning);
