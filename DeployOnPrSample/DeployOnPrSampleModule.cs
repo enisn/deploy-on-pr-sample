@@ -6,6 +6,7 @@ using DeployOnPrSample.Localization;
 using DeployOnPrSample.Menus;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
+using Volo.Abp.Uow;
 using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
 using Volo.Abp.AspNetCore.Mvc;
@@ -15,38 +16,38 @@ using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Serilog;
-using Volo.Abp.AuditLogging.MongoDB;
+using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
-using Volo.Abp.MongoDB;
 using Volo.Abp.Emailing;
+using Volo.Abp.EntityFrameworkCore;
+using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.FeatureManagement;
-using Volo.Abp.FeatureManagement.MongoDB;
+using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
-using Volo.Abp.Identity.MongoDB;
+using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.Identity.Web;
 using Volo.Abp.Localization;
 using Volo.Abp.Localization.ExceptionHandling;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
-using Volo.Abp.OpenIddict.MongoDB;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement;
-using Volo.Abp.PermissionManagement.MongoDB;
+using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.HttpApi;
 using Volo.Abp.PermissionManagement.Identity;
 using Volo.Abp.PermissionManagement.OpenIddict;
 using Volo.Abp.SettingManagement;
-using Volo.Abp.SettingManagement.MongoDB;
+using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.Web;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.TenantManagement;
-using Volo.Abp.TenantManagement.MongoDB;
+using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Volo.Abp.TenantManagement.Web;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.Security.Claims;
 using Volo.Abp.UI.Navigation;
 using Volo.Abp.UI.Navigation.Urls;
-using Volo.Abp.Uow;
 using Volo.Abp.Validation.Localization;
 using Volo.Abp.VirtualFileSystem;
 
@@ -57,6 +58,7 @@ namespace DeployOnPrSample;
     typeof(AbpAspNetCoreMvcModule),
     typeof(AbpAutofacModule),
     typeof(AbpAutoMapperModule),
+    typeof(AbpEntityFrameworkCorePostgreSqlModule),
     typeof(AbpSwashbuckleModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
@@ -71,33 +73,33 @@ namespace DeployOnPrSample;
     typeof(AbpPermissionManagementDomainOpenIddictModule),
     typeof(AbpIdentityApplicationModule),
     typeof(AbpIdentityHttpApiModule),
-    typeof(AbpIdentityMongoDbModule),
-    typeof(AbpOpenIddictMongoDbModule),
+    typeof(AbpIdentityEntityFrameworkCoreModule),
+    typeof(AbpOpenIddictEntityFrameworkCoreModule),
     typeof(AbpIdentityWebModule),
 
     // Audit logging module packages
-    typeof(AbpAuditLoggingMongoDbModule),
+    typeof(AbpAuditLoggingEntityFrameworkCoreModule),
 
     // Permission Management module packages
     typeof(AbpPermissionManagementApplicationModule),
     typeof(AbpPermissionManagementHttpApiModule),
-    typeof(AbpPermissionManagementMongoDbModule),
+    typeof(AbpPermissionManagementEntityFrameworkCoreModule),
 
     // Tenant Management module packages
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpTenantManagementHttpApiModule),
-    typeof(AbpTenantManagementMongoDbModule),
+    typeof(AbpTenantManagementEntityFrameworkCoreModule),
     typeof(AbpTenantManagementWebModule),
 
     // Feature Management module packages
     typeof(AbpFeatureManagementApplicationModule),
-    typeof(AbpFeatureManagementMongoDbModule),
+    typeof(AbpFeatureManagementEntityFrameworkCoreModule),
     typeof(AbpFeatureManagementHttpApiModule),
     typeof(AbpFeatureManagementWebModule),
 
     // Setting Management module packages
     typeof(AbpSettingManagementApplicationModule),
-    typeof(AbpSettingManagementMongoDbModule),
+    typeof(AbpSettingManagementEntityFrameworkCoreModule),
     typeof(AbpSettingManagementHttpApiModule),
     typeof(AbpSettingManagementWebModule)
 )]
@@ -162,7 +164,7 @@ public class DeployOnPrSampleModule : AbpModule
         ConfigureAutoApiControllers();
         ConfigureVirtualFiles(hostingEnvironment);
         ConfigureLocalization();
-        ConfigureMongoDB(context);
+        ConfigureEfCore(context);
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context)
@@ -181,6 +183,7 @@ public class DeployOnPrSampleModule : AbpModule
             options.IsEnabled = IsMultiTenant;
         });
     }
+
 
     private void ConfigureUrls(IConfiguration configuration)
     {
@@ -297,19 +300,26 @@ public class DeployOnPrSampleModule : AbpModule
         });
     }
 
-    private void ConfigureMongoDB(ServiceConfigurationContext context)
+    private void ConfigureEfCore(ServiceConfigurationContext context)
     {
-        context.Services.AddMongoDbContext<DeployOnPrSampleDbContext>(options =>
+        context.Services.AddAbpDbContext<DeployOnPrSampleDbContext>(options =>
         {
-            options.AddDefaultRepositories();
+            /* You can remove "includeAllEntities: true" to create
+             * default repositories only for aggregate roots
+             * Documentation: https://docs.abp.io/en/abp/latest/Entity-Framework-Core#add-default-repositories
+             */
+            options.AddDefaultRepositories(includeAllEntities: true);
         });
 
-        Configure<AbpUnitOfWorkDefaultOptions>(options =>
+        Configure<AbpDbContextOptions>(options =>
         {
-            options.TransactionBehavior = UnitOfWorkTransactionBehavior.Disabled;
+            options.Configure(configurationContext =>
+            {
+                configurationContext.UseNpgsql();
+            });
         });
+
     }
-
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
