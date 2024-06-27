@@ -1,3 +1,4 @@
+using System.Collections;
 using DeployOnPrSample.Data;
 using Serilog;
 using Serilog.Events;
@@ -20,6 +21,10 @@ public class Program
             .Enrich.FromLogContext()
             .WriteTo.Async(c => c.File("Logs/logs.txt"))
             .WriteTo.Async(c => c.Console());
+
+        Console.WriteLine("GetEnvironmentVariables: ");
+        foreach (DictionaryEntry de in Environment.GetEnvironmentVariables())
+           Console.WriteLine("  {0} = {1}", de.Key, de.Value);
 
         if (IsMigrateDatabase(args))
         {
