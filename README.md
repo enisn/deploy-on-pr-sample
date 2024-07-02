@@ -1,9 +1,9 @@
 # DeployOnPrSample
 
-This repository a proper demonstration of deploying application for each PR opened.
+This repository is a proper demonstration of deploying application for each PR opened.
 
 
-Create a PR and see it'll deployed quickly. And when PR is closed, deployment will be cleared.
+Create a PR and see it'll be deployed quickly. And when PR is closed, deployment will be cleared.
 
 URL pattern is `{{pr_id}}.deployonprsample.enisn-projects.io`. 
 
