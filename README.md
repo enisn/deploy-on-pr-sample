@@ -8,6 +8,7 @@ Create a PR and see it'll be deployed quickly. And when PR is closed, deployment
 URL pattern is `{{pr_id}}.deployonprsample.enisn-projects.io`. 
 
 Current `main` branch: [deployonprsample.enisn-projects.io](https://deployonprsample.enisn-projects.io)
+
 PR #3 in `my-pr-3` branch: [3.deployonprsample.enisn-projects.io](https://3.deployonprsample.enisn-projects.io/).
 
 Also check bot status comment here: https://github.com/enisn/deploy-on-pr-sample/pull/3#issuecomment-2194857942
